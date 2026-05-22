@@ -632,7 +632,7 @@ def imprimir_resultado(resultado):
     print()
 
 
-# =========== FUNCIÓN PRINCIPAL ===========
+# ============ FUNCIÓN PRINCIPAL ============
 
 def main():
     """
