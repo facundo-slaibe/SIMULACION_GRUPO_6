@@ -23,10 +23,9 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 ARCHIVO = "pedidos_delivery.csv"  # Archivo con datos históricos de pedidos
 MINUTOS_DIA = 24 * 60  # Minutos totales en un día (1440)
 SEMILLA = 42  # Semilla para reproducibilidad de números aleatorios
-REPLICAS = 10  # Cantidad de simulaciones por escenario (TODO: CAMBIAR TIEMPO A 180 dias)
+REPLICAS = 180  # Cantidad de simulaciones por escenario (TODO: CAMBIAR TIEMPO A 180 dias)
 ESCENARIOS_REPARTIDORES = [1, 2, 3, 4]  # Número de repartidores a probar
 DISTANCIAS = [2,3] # Km de distancia a simular por separado
-DISTANCIA = 0 # Km de distancia default para la simulación general
 
 # ============ FUNCIONES DE FRANJAS HORARIAS ============
 
@@ -629,17 +628,20 @@ def resumir_escenario(nombre, repartidores, modelos, tasas_express, prob_lluvia)
     return {
         "nombre": nombre,
         "repartidores": repartidores,
-        "pps_normal": promedio([r["pps_normal"] for r in resultados]),
-        "pps_express": promedio([r["pps_express"] for r in resultados]),
-        "pps_total": promedio([r["pps_total"] for r in resultados]),
-        "completados": math.ceil(promedio([r["completados_totales"] for r in resultados])),
+        # --- Promedios ---
+        "pps_normal":           promedio([r["pps_normal"] for r in resultados]),
+        "pps_express":          promedio([r["pps_express"] for r in resultados]),
+        "pps_total":            promedio([r["pps_total"] for r in resultados]),
         "cola_promedio_normal": promedio([r["cola_promedio_normal"] for r in resultados]),
-        "cola_promedio_express": promedio([r["cola_promedio_express"] for r in resultados]),
-        "cola_maxima_normal": math.ceil(promedio([r["cola_maxima_normal"] for r in resultados])),
-        "cola_maxima_express": math.ceil(promedio([r["cola_maxima_express"] for r in resultados])),
-        "pto_promedio": promedio([promedio(r["pto"]) for r in resultados]),
-        "valor_pedidos_total": promedio([r["valor_pedidos_total"] for r in resultados]),
-        "corridas_con_lluvia": sum(r["lluvia"] for r in resultados),
+        "cola_promedio_express":promedio([r["cola_promedio_express"] for r in resultados]),
+        "cola_maxima_normal":   math.ceil(promedio([r["cola_maxima_normal"] for r in resultados])),
+        "cola_maxima_express":  math.ceil(promedio([r["cola_maxima_express"] for r in resultados])),
+        "pto_promedio":         promedio([promedio(r["pto"]) for r in resultados]),
+        # --- Sumas ---
+        "completados":          sum([r["completados_totales"] for r in resultados]),
+        "valor_pedidos_total":  promedio([r["valor_pedidos_total"] for r in resultados]),
+        "ganancia_total":       sum([r["valor_pedidos_total"] for r in resultados]),
+        "corridas_con_lluvia":  sum(r["lluvia"] for r in resultados),
     }
 
 
@@ -669,17 +671,18 @@ def imprimir_resultado(resultado):
     """Imprime en formato legible los resultados de un escenario."""
     print(f"Escenario: {resultado['nombre']}")
     print(f"- Repartidores: {resultado['repartidores']}")
-    print(f"- Pedidos completados: {resultado['completados']:.2f}")
+    print(f"- Pedidos completados (total {REPLICAS} días): {resultado['completados']}")
     print(f"- PPS normal: {resultado['pps_normal']:.2f} min")
     print(f"- PPS express: {resultado['pps_express']:.2f} min")
     print(f"- PPS total: {resultado['pps_total']:.2f} min")
     print(f"- Cola promedio normal: {resultado['cola_promedio_normal']:.2f}")
     print(f"- Cola promedio express: {resultado['cola_promedio_express']:.2f}")
-    print(f"- Cola maxima normal: {resultado['cola_maxima_normal']:.2f}")
-    print(f"- Cola maxima express: {resultado['cola_maxima_express']:.2f}")
+    print(f"- Cola maxima normal: {resultado['cola_maxima_normal']}")
+    print(f"- Cola maxima express: {resultado['cola_maxima_express']}")
     print(f"- PTO promedio: {resultado['pto_promedio']:.2f}%")
-    print(f"- Valor pedidos total: {resultado['valor_pedidos_total']:.2f}")
-    print(f"- Corridas con lluvia: {resultado['corridas_con_lluvia']} de {REPLICAS}")
+    print(f"- Valor promedio diario: ${resultado['valor_pedidos_total']:,.2f}")
+    print(f"- Ganancia total ({REPLICAS} días): ${resultado['ganancia_total']:,.2f}")
+    print(f"- Días con lluvia: {resultado['corridas_con_lluvia']} de {REPLICAS}")
     print()
 
 
@@ -755,13 +758,13 @@ def main():
             "Escenario con mejor resultado: "
             f"{recomendado['nombre']} "
             f"(menor PPS total: {recomendado['pps_total']:.2f} min | "
-            f"Ganancia: ${recomendado['valor_pedidos_total']:.2f})"
+            f"Ganancia: ${recomendado['ganancia_total']:,.2f})"
         )
         print(
             "Escenario con peor resultado: "
             f"{peor['nombre']} "
             f"(mayor PPS total: {peor['pps_total']:.2f} min | "
-            f"Ganancia: ${peor['valor_pedidos_total']:.2f})"
+            f"Ganancia: ${peor['ganancia_total']:,.2f})"
         )
 
 
