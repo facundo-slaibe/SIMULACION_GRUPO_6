@@ -25,7 +25,8 @@ MINUTOS_DIA = 24 * 60  # Minutos totales en un día (1440)
 SEMILLA = 42  # Semilla para reproducibilidad de números aleatorios
 REPLICAS = 10  # Cantidad de simulaciones por escenario (TODO: CAMBIAR TIEMPO A 180 dias)
 ESCENARIOS_REPARTIDORES = [1, 2, 3, 4]  # Número de repartidores a probar
-
+DISTANCIAS = [2,3] # Km de distancia a simular por separado
+DISTANCIA = 0 # Km de distancia default para la simulación general
 
 # ============ FUNCIONES DE FRANJAS HORARIAS ============
 
@@ -73,10 +74,14 @@ def franja_por_minuto(tiempo):
 
 # ============ CARGA Y PROCESAMIENTO DE DATOS ============
 
-def cargar_datos():
+def cargar_datos(distancia_km):
     """
     Carga datos históricos del archivo CSV y los procesa.
+    Filtra los pedidos según la distancia especificada.
     Estructura: fecha, distancia, clima, prioridad, franja horaria.
+    
+    Args:
+        distancia_km: distancia en km para filtrar los pedidos
     
     Returns:
         lista de diccionarios con datos de pedidos ordenados por fecha
@@ -89,16 +94,20 @@ def cargar_datos():
         for fila in lector:
             # Convierte string de fecha a objeto datetime
             fecha = datetime.strptime(fila["fecha_hora"], "%Y-%m-%d %H:%M:%S")
-            pedidos.append(
-                {
-                    "fecha": fecha,
-                    "dia": fecha.date(),
-                    "franja": franja_horaria(fecha),
-                    "distancia": float(fila["distancia_km"]),
-                    "clima": fila["clima"].strip().lower(),
-                    "prioridad": fila["prioridad"].strip().lower(),
-                }
-            )
+            
+            # Filtra por distancia
+            if float(fila["distancia_km"]) <= distancia_km:
+                pedidos.append(
+                    {
+                        "fecha": fecha,
+                        "dia": fecha.date(),
+                        "franja": franja_horaria(fecha),
+                        "distancia": float(fila["distancia_km"]),
+                        "clima": fila["clima"].strip().lower(),
+                        "prioridad": fila["prioridad"].strip().lower(),
+                        "valor": float(fila["valor_pedido"]),
+                    }
+                )
 
     # Ordena por fecha para mantener cronología
     pedidos.sort(key=lambda pedido: pedido["fecha"])
@@ -175,7 +184,7 @@ def generar_muestra_ta(pedidos):
     return muestra
 
 
-def preparar_modelos(pedidos):
+def preparar_modelos(pedidos, distancia_km):
     """
     Prepara modelos estadísticos para simular eventos aleatorios.
     
@@ -224,17 +233,36 @@ def preparar_modelos(pedidos):
     ta_normal = generar_muestra_ta([p for p in pedidos if p["clima"] == "normal"])
     ta_lluvia = generar_muestra_ta([p for p in pedidos if p["clima"] == "lluvia"])
 
-    # Ajusta distribuciones de probabilidad a cada modelo
-    modelos = {
-        "ia_general": ajustar_fdp(ia_general, "betaprime"),
-        "ia_manana": ajustar_fdp(ia_por_franja["manana"], "truncpareto"),
-        "ia_mediodia": ajustar_fdp(ia_por_franja["mediodia"], "betaprime"),
-        "ia_tarde": ajustar_fdp(ia_por_franja["tarde"], "betaprime"),
-        "ia_noche": ajustar_fdp(ia_por_franja["noche"], "exponweib"),
-        "ta_general": ajustar_fdp(ta_todos, "gausshyper"),
-        "ta_normal": ajustar_fdp(ta_normal, "gausshyper"),
-        "ta_lluvia": ajustar_fdp(ta_lluvia, "gausshyper"),
-    }
+    # ========== VALOR DE PEDIDOS ==========
+    valor_pedidos = [p["valor"] for p in pedidos]
+
+    # Configura modelos de probabilidad para cada variable según la distancia
+    if distancia_km == 2:
+        # Ajusta distribuciones de probabilidad a cada modelo para distancia 2 km
+        modelos = {
+            "ia_general": ajustar_fdp(ia_general, "betaprime"),
+            "ia_manana": ajustar_fdp(ia_por_franja["manana"], "truncpareto"),
+            "ia_mediodia": ajustar_fdp(ia_por_franja["mediodia"], "betaprime"),
+            "ia_tarde": ajustar_fdp(ia_por_franja["tarde"], "betaprime"),
+            "ia_noche": ajustar_fdp(ia_por_franja["noche"], "exponweib"),
+            "ta_general": ajustar_fdp(ta_todos, "gausshyper"),
+            "ta_normal": ajustar_fdp(ta_normal, "gausshyper"),
+            "ta_lluvia": ajustar_fdp(ta_lluvia, "gausshyper"),
+            "valor_pedido": ajustar_fdp(valor_pedidos, "levy_stable"),
+        }
+    else:
+        # Ajusta distribuciones de probabilidad a cada modelo (caso default 3 km)
+        modelos = {
+            "ia_general": ajustar_fdp(ia_general, "betaprime"),
+            "ia_manana": ajustar_fdp(ia_por_franja["manana"], "truncpareto"),
+            "ia_mediodia": ajustar_fdp(ia_por_franja["mediodia"], "betaprime"),
+            "ia_tarde": ajustar_fdp(ia_por_franja["tarde"], "betaprime"),
+            "ia_noche": ajustar_fdp(ia_por_franja["noche"], "exponweib"),
+            "ta_general": ajustar_fdp(ta_todos, "gausshyper"),
+            "ta_normal": ajustar_fdp(ta_normal, "gausshyper"),
+            "ta_lluvia": ajustar_fdp(ta_lluvia, "gausshyper"),
+            "valor_pedido": ajustar_fdp(valor_pedidos, "rice"),
+        }
 
     # ========== TASA DE PEDIDOS EXPRESS ==========
     tasas_express = {}
@@ -300,6 +328,20 @@ def generar_ta(modelos, hay_lluvia):
     else:
         distribucion, parametros = modelos["ta_normal"]
 
+    return max(0.01, float(distribucion.rvs(*parametros)))
+
+
+def generar_valor_pedido(modelos):
+    """
+    Genera un valor de pedido aleatorio según la distribución ajustada.
+    
+    Args:
+        modelos: dict con distribuciones ajustadas
+    
+    Returns:
+        float: valor del pedido
+    """
+    distribucion, parametros = modelos["valor_pedido"]
     return max(0.01, float(distribucion.rvs(*parametros)))
 
 
@@ -426,6 +468,7 @@ def simular_una_vez(nombre, repartidores, modelos, tasas_express, prob_lluvia):
     sumatoria_pps_express = 0  # Suma de tiempos en sistema (express)
     completados_normal = 0  # Cantidad de normal completados
     completados_express = 0  # Cantidad de express completados
+    valor_pedidos_total = 0  # Suma acumulada de valores de pedidos
 
     area_cola_normal = 0  # Integral de cola normal en el tiempo
     area_cola_express = 0  # Integral de cola express en el tiempo
@@ -489,6 +532,10 @@ def simular_una_vez(nombre, repartidores, modelos, tasas_express, prob_lluvia):
 
         # ========== EVENTO: UN REPARTIDOR TERMINA ENTREGA ==========
         else:
+            # Genera y registra el valor del pedido
+            valor_generado = generar_valor_pedido(modelos)
+            valor_pedidos_total += valor_generado
+            
             # Registra el pedido como completado
             if tipos[indice_entrega] == "normal":
                 completados_normal += 1
@@ -539,6 +586,7 @@ def simular_una_vez(nombre, repartidores, modelos, tasas_express, prob_lluvia):
         "cola_maxima_express": max_cola_express,
         # PTO = Percentage Time Off = porcentaje de tiempo ocioso de cada repartidor
         "pto": [tiempo_ocioso * 100 / tiempo_actual if tiempo_actual else 0 for tiempo_ocioso in tiempos_ociosos],
+        "valor_pedidos_total": valor_pedidos_total,
         "lluvia": hay_lluvia,
     }
 
@@ -590,6 +638,7 @@ def resumir_escenario(nombre, repartidores, modelos, tasas_express, prob_lluvia)
         "cola_maxima_normal": math.ceil(promedio([r["cola_maxima_normal"] for r in resultados])),
         "cola_maxima_express": math.ceil(promedio([r["cola_maxima_express"] for r in resultados])),
         "pto_promedio": promedio([promedio(r["pto"]) for r in resultados]),
+        "valor_pedidos_total": promedio([r["valor_pedidos_total"] for r in resultados]),
         "corridas_con_lluvia": sum(r["lluvia"] for r in resultados),
     }
 
@@ -605,6 +654,7 @@ def imprimir_fdp(modelos, tasas_express, prob_lluvia):
     print(f"- IA mediodia: betaprime")
     print(f"- IA tarde: betaprime")
     print(f"- IA noche: exponweib")
+    print(f"- Valor pedido: rice")
     print()
     print("Probabilidades usadas")
     print(f"- Dia lluvioso: {prob_lluvia:.4f}")
@@ -628,6 +678,7 @@ def imprimir_resultado(resultado):
     print(f"- Cola maxima normal: {resultado['cola_maxima_normal']:.2f}")
     print(f"- Cola maxima express: {resultado['cola_maxima_express']:.2f}")
     print(f"- PTO promedio: {resultado['pto_promedio']:.2f}%")
+    print(f"- Valor pedidos total: {resultado['valor_pedidos_total']:.2f}")
     print(f"- Corridas con lluvia: {resultado['corridas_con_lluvia']} de {REPLICAS}")
     print()
 
@@ -642,50 +693,76 @@ def main():
     3. Prueba diferentes escenarios de repartidores
     4. Compara resultados y recomienda el mejor
     """
+
+    # Mostramos opciones de distancia a simular
+    opciones = ", ".join(str(d) for d in DISTANCIAS)
+    while True:
+        entrada = input(f"¿Que distancia desea simular? [{opciones}]" f"(o presione Enter para simular todas): ").strip()
+        if entrada == "":
+            distancias_a_simular = DISTANCIAS
+            break
+        if entrada.isdigit() and int(entrada) in DISTANCIAS:
+            distancias_a_simular = [int(entrada)]
+            break
+
+        print(f" Opcion invalida. Ingrese uno de los siguientes valores: {opciones}, o Enter para todas")
+
     # Fija semilla para reproducibilidad
     random.seed(SEMILLA)
 
-    # Carga datos históricos y prepara modelos
-    pedidos = cargar_datos()
-    modelos, tasas_express, prob_lluvia = preparar_modelos(pedidos)
+    #Explica que va a simular
+    for distancia_km in distancias_a_simular: 
+        print("=" * 60)
+        print(f" SIMULACION PARA DISTANCIA = {distancia_km} KM")
+        print("=" * 60)
+        print()
 
-    # Muestra configuración de la simulación
-    imprimir_fdp(modelos, tasas_express, prob_lluvia)
+        # Carga datos históricos filtrados por distancia y prepara modelos
+        pedidos = cargar_datos(distancia_km)  
 
-    # Prueba cada escenario (cantidad diferente de repartidores)
-    resultados = []
-    for repartidores in ESCENARIOS_REPARTIDORES:
-        print(f"Simulando escenario con {repartidores} repartidores...")
-        resultados.append(
-            resumir_escenario(
-                f"Escenario R={repartidores}",
-                repartidores,
-                modelos,
-                tasas_express,
-                prob_lluvia,
+        #Prepara modelos filtrados para esta distancia
+        modelos, tasas_express, prob_lluvia = preparar_modelos(pedidos, distancia_km)
+        
+        # Muestra configuración de la simulación
+        imprimir_fdp(modelos, tasas_express, prob_lluvia)
+
+        # Prueba cada escenario (cantidad diferente de repartidores)
+        resultados = []
+        for repartidores in ESCENARIOS_REPARTIDORES:
+            print(f"Simulando escenario con {repartidores} repartidores...")
+            resultados.append(
+                resumir_escenario(
+                    f"(R = {repartidores} | {distancia_km} km)",
+                    repartidores,
+                    modelos,
+                    tasas_express,
+                    prob_lluvia,
+                )
             )
+
+        # Imprime resultados de todos los escenarios
+        print()
+        print("Resultados de simulacion")
+        print("------------------------")
+        for resultado in resultados:
+            imprimir_resultado(resultado)
+
+        # Identifica y muestra el mejor y peor escenario
+        # El mejor se define por una combinación de bajo PPS y bajo número de repartidores
+        recomendado = min(resultados, key=lambda x: calcular_score_eficiencia(x, resultados))
+        peor = max(resultados, key=lambda x: calcular_score_eficiencia(x, resultados))
+        print(
+            "Escenario con mejor resultado: "
+            f"{recomendado['nombre']} "
+            f"(menor PPS total: {recomendado['pps_total']:.2f} min | "
+            f"Ganancia: ${recomendado['valor_pedidos_total']:.2f})"
         )
-
-    # Imprime resultados de todos los escenarios
-    print("Resultados de simulacion")
-    print("------------------------")
-    for resultado in resultados:
-        imprimir_resultado(resultado)
-
-    # Identifica y muestra el mejor y peor escenario
-    # El mejor se define por una combinación de bajo PPS y bajo número de repartidores
-    recomendado = min(resultados, key=lambda x: calcular_score_eficiencia(x, resultados))
-    peor = max(resultados, key=lambda x: calcular_score_eficiencia(x, resultados))
-    print(
-        "Escenario con mejor resultado: "
-        f"{recomendado['nombre']} "
-        f"(menor PPS total: {recomendado['pps_total']:.2f} min)"
-    )
-    print(
-        "Escenario con peor resultado: "
-        f"{peor['nombre']} "
-        f"(mayor PPS total: {peor['pps_total']:.2f} min)"
-    )
+        print(
+            "Escenario con peor resultado: "
+            f"{peor['nombre']} "
+            f"(mayor PPS total: {peor['pps_total']:.2f} min | "
+            f"Ganancia: ${peor['valor_pedidos_total']:.2f})"
+        )
 
 
 # ============ PUNTO DE ENTRADA ============
