@@ -241,12 +241,12 @@ def preparar_modelos(pedidos, distancia_km):
         modelos = {
             "ia_general": ajustar_fdp(ia_general, "betaprime"),
             "ia_manana": ajustar_fdp(ia_por_franja["manana"], "truncpareto"),
-            "ia_mediodia": ajustar_fdp(ia_por_franja["mediodia"], "betaprime"),
-            "ia_tarde": ajustar_fdp(ia_por_franja["tarde"], "betaprime"),
+            "ia_mediodia": ajustar_fdp(ia_por_franja["mediodia"], "dpareto_lognorm"),
+            "ia_tarde": ajustar_fdp(ia_por_franja["tarde"], "gengamma"),
             "ia_noche": ajustar_fdp(ia_por_franja["noche"], "exponweib"),
-            "ta_general": ajustar_fdp(ta_todos, "gausshyper"),
-            "ta_normal": ajustar_fdp(ta_normal, "gausshyper"),
-            "ta_lluvia": ajustar_fdp(ta_lluvia, "gausshyper"),
+            "ta_general": ajustar_fdp(ta_todos, "burr"),
+            "ta_normal": ajustar_fdp(ta_normal, "burr"),
+            "ta_lluvia": ajustar_fdp(ta_lluvia, "burr"),
             "valor_pedido": ajustar_fdp(valor_pedidos, "levy_stable"),
         }
     else:
@@ -647,16 +647,18 @@ def resumir_escenario(nombre, repartidores, modelos, tasas_express, prob_lluvia)
 
 # ============ PRESENTACIÓN DE RESULTADOS ============
 
-def imprimir_fdp(modelos, tasas_express, prob_lluvia):
+def imprimir_fdp(modelos, tasas_express, prob_lluvia, distancia_km):
     """Muestra qué distribuciones y probabilidades se usaron en la simulación."""
-    print("FDPs utilizadas")
-    print(f"- TA: gausshyper")
-    print(f"- IA general: betaprime")
-    print(f"- IA manana: truncpareto")
-    print(f"- IA mediodia: betaprime")
-    print(f"- IA tarde: betaprime")
-    print(f"- IA noche: exponweib")
-    print(f"- Valor pedido: rice")
+    print(f"FDPs utilizadas (distancia: {distancia_km} km)")
+    # Extrae los nombres de las distribuciones de los objetos scipy
+    print(f"- TA normal: {modelos['ta_normal'][0].name}")
+    print(f"- TA lluvia: {modelos['ta_lluvia'][0].name}")
+    print(f"- IA general: {modelos['ia_general'][0].name}")
+    print(f"- IA manana: {modelos['ia_manana'][0].name}")
+    print(f"- IA mediodia: {modelos['ia_mediodia'][0].name}")
+    print(f"- IA tarde: {modelos['ia_tarde'][0].name}")
+    print(f"- IA noche: {modelos['ia_noche'][0].name}")
+    print(f"- Valor pedido: {modelos['valor_pedido'][0].name}")
     print()
     print("Probabilidades usadas")
     print(f"- Dia lluvioso: {prob_lluvia:.4f}")
@@ -727,7 +729,7 @@ def main():
         modelos, tasas_express, prob_lluvia = preparar_modelos(pedidos, distancia_km)
         
         # Muestra configuración de la simulación
-        imprimir_fdp(modelos, tasas_express, prob_lluvia)
+        imprimir_fdp(modelos, tasas_express, prob_lluvia, distancia_km)
 
         # Prueba cada escenario (cantidad diferente de repartidores)
         resultados = []
