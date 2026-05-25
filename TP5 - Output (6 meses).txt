@@ -1,0 +1,174 @@
+============================================================
+ SIMULACION PARA DISTANCIA = 2 KM
+============================================================
+
+FDPs utilizadas
+- TA: gausshyper
+- IA general: betaprime
+- IA manana: truncpareto
+- IA mediodia: betaprime
+- IA tarde: betaprime
+- IA noche: exponweib
+- Valor pedido: rice
+
+Probabilidades usadas
+- Dia lluvioso: 0.2167
+- Express manana: 0.1429
+- Express mediodia: 0.1539
+- Express tarde: 0.1537
+- Express noche: 0.1337
+
+Simulando escenario con 1 repartidores...
+Simulando escenario con 2 repartidores...
+Simulando escenario con 3 repartidores...
+Simulando escenario con 4 repartidores...
+
+Resultados de simulacion
+------------------------
+Escenario: (R = 1 | 2 km)
+- Repartidores: 1
+- Pedidos completados (total 180 días): 13890
+- PPS normal: 69.71 min
+- PPS express: 19.81 min
+- PPS total: 62.29 min
+- Cola promedio normal: 2.75
+- Cola promedio express: 0.06
+- Cola maxima normal: 11
+- Cola maxima express: 2
+- PTO promedio: 37.90%
+- Valor promedio diario: $1,209,219.48
+- Ganancia total (180 días): $217,659,506.33
+- Días con lluvia: 37 de 180
+
+Escenario: (R = 2 | 2 km)
+- Repartidores: 2
+- Pedidos completados (total 180 días): 14258
+- PPS normal: 18.11 min
+- PPS express: 14.47 min
+- PPS total: 17.58 min
+- Cola promedio normal: 0.29
+- Cola promedio express: 0.02
+- Cola maxima normal: 5
+- Cola maxima express: 2
+- PTO promedio: 64.70%
+- Valor promedio diario: $1,248,556.45
+- Ganancia total (180 días): $224,740,161.48
+- Días con lluvia: 41 de 180
+
+Escenario: (R = 3 | 2 km)
+- Repartidores: 3
+- Pedidos completados (total 180 días): 14127
+- PPS normal: 14.11 min
+- PPS express: 13.37 min
+- PPS total: 14.00 min
+- Cola promedio normal: 0.06
+- Cola promedio express: 0.00
+- Cola maxima normal: 3
+- Cola maxima express: 2
+- PTO promedio: 76.10%
+- Valor promedio diario: $1,234,675.54
+- Ganancia total (180 días): $222,241,597.80
+- Días con lluvia: 49 de 180
+
+Escenario: (R = 4 | 2 km)
+- Repartidores: 4
+- Pedidos completados (total 180 días): 13782
+- PPS normal: 12.41 min
+- PPS express: 12.42 min
+- PPS total: 12.41 min
+- Cola promedio normal: 0.01
+- Cola promedio express: 0.00
+- Cola maxima normal: 2
+- Cola maxima express: 2
+- PTO promedio: 83.30%
+- Valor promedio diario: $1,205,020.45
+- Ganancia total (180 días): $216,903,681.64
+- Días con lluvia: 38 de 180
+
+
+============================================================
+ SIMULACION PARA DISTANCIA = 3 KM
+============================================================
+
+FDPs utilizadas
+- TA: gausshyper
+- IA general: betaprime
+- IA manana: truncpareto
+- IA mediodia: betaprime
+- IA tarde: betaprime
+- IA noche: exponweib
+- Valor pedido: rice
+
+Probabilidades usadas
+- Dia lluvioso: 0.2167
+- Express manana: 0.1551
+- Express mediodia: 0.1620
+- Express tarde: 0.1550
+- Express noche: 0.1339
+
+Simulando escenario con 1 repartidores...
+Simulando escenario con 2 repartidores...
+Simulando escenario con 3 repartidores...
+Simulando escenario con 4 repartidores...
+
+Resultados de simulacion
+------------------------
+Escenario: (R = 1 | 3 km)
+- Repartidores: 1
+- Pedidos completados (total 180 días): 15338
+- PPS normal: 106.34 min
+- PPS express: 24.09 min
+- PPS total: 93.68 min
+- Cola promedio normal: 4.88
+- Cola promedio express: 0.09
+- Cola maxima normal: 16
+- Cola maxima express: 2
+- PTO promedio: 23.31%
+- Valor promedio diario: $1,345,114.43
+- Ganancia total (180 días): $242,120,598.05
+- Días con lluvia: 28 de 180
+
+Escenario: (R = 2 | 3 km)
+- Repartidores: 2
+- Pedidos completados (total 180 días): 15433
+- PPS normal: 27.74 min
+- PPS express: 17.86 min
+- PPS total: 26.34 min
+- Cola promedio normal: 0.73
+- Cola promedio express: 0.03
+- Cola maxima normal: 6
+- Cola maxima express: 2
+- PTO promedio: 54.99%
+- Valor promedio diario: $1,359,853.66
+- Ganancia total (180 días): $244,773,658.37
+- Días con lluvia: 37 de 180
+
+Escenario: (R = 3 | 3 km)
+- Repartidores: 3
+- Pedidos completados (total 180 días): 15549
+- PPS normal: 17.34 min
+- PPS express: 16.21 min
+- PPS total: 17.18 min
+- Cola promedio normal: 0.11
+- Cola promedio express: 0.01
+- Cola maxima normal: 4
+- Cola maxima express: 2
+- PTO promedio: 68.85%
+- Valor promedio diario: $1,364,537.84
+- Ganancia total (180 días): $245,616,810.40
+- Días con lluvia: 44 de 180
+
+Escenario: (R = 4 | 3 km)
+- Repartidores: 4
+- Pedidos completados (total 180 días): 15317
+- PPS normal: 15.37 min
+- PPS express: 15.11 min
+- PPS total: 15.33 min
+- Cola promedio normal: 0.02
+- Cola promedio express: 0.00
+- Cola maxima normal: 2
+- Cola maxima express: 2
+- PTO promedio: 77.59%
+- Valor promedio diario: $1,345,406.05
+- Ganancia total (180 días): $242,173,088.27
+- Días con lluvia: 38 de 180
