@@ -756,6 +756,7 @@ def main():
         # El mejor se define por una combinación de bajo PPS y bajo número de repartidores
         recomendado = min(resultados, key=lambda x: calcular_score_eficiencia(x, resultados))
         peor = max(resultados, key=lambda x: calcular_score_eficiencia(x, resultados))
+        /*
         print(
             "Escenario con mejor resultado: "
             f"{recomendado['nombre']} "
@@ -768,6 +769,7 @@ def main():
             f"(mayor PPS total: {peor['pps_total']:.2f} min | "
             f"Ganancia: ${peor['ganancia_total']:,.2f})"
         )
+        */
 
 
 # ============ PUNTO DE ENTRADA ============
