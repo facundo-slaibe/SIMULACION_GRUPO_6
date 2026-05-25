@@ -127,7 +127,7 @@ No additional setup needed — the standard library handles CSV reading and rand
 ## Usage
 
 ```bash
-python simu_grupo_6.py
+python simulacion.py
 ```
 
 You will be prompted to choose a delivery distance to simulate:
